@@ -6,14 +6,14 @@ import flash.geom.Point;
 
 public class Circle extends Sprite {
 
-    const windowWidth:int = 512;
-    const windowHeight:int = 512;
+    const windowWidth:int = 1024;
+    const windowHeight:int = 1024;
     protected var center:Point;
-    protected var radius:int;
+    protected var radius:Number;
     protected var color:uint;
     protected var speed:Point;
 
-    public function Circle(x:Number, y:Number, radius:int) {
+    public function Circle(x:Number, y:Number, radius:Number) {
         center = new Point(x, y);
         speed = new Point(0.0, 0.0);
         this.radius = radius;
@@ -58,19 +58,23 @@ public class Circle extends Sprite {
     public function capture(circle:Circle):int { ////????????
         var intersectionValue:Number = radius + circle.radius - getDistance(circle);
         if (intersectionValue > 0.0) {
-            if (radius >= circle.radius)
+            if (radius >= circle.getRadius)
                 increaseSquare(circle.getTheDifferenceSquares(intersectionValue));
             else
                 circle.increaseSquare(getTheDifferenceSquares(intersectionValue));
             if (radius <= 0.0) return 1;
-            if (circle.radius <= 0.0) return 2;
+            if (circle.getRadius <= 0.0) return 2;
         }
         return 0;
     }
 
     // Увеличить площадь объекта на deltaSquare
     public function increaseSquare(deltaSquare:Number):void {
-        radius = Math.sqrt((square + deltaSquare) / Math.PI);
+        if (deltaSquare>0) {
+            trace(deltaSquare);
+            radius = Math.sqrt((square + deltaSquare) / Math.PI);
+
+        }
     }
 
     // Изменить направление скорости, если радиус circle больше, чем у this
@@ -123,6 +127,10 @@ public class Circle extends Sprite {
 
     public function get centerOfCircle():Point {
         return center;
+    }
+
+    public function set newRadius(value:Number):void {
+        radius=value;
     }
 
 
