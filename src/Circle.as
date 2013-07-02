@@ -1,6 +1,7 @@
 package {
 import flash.display.Graphics;
 import flash.display.Sprite;
+import flash.geom.ColorTransform;
 import flash.geom.Point;
 
 public class Circle extends Sprite {
@@ -26,14 +27,9 @@ public class Circle extends Sprite {
 
     public function draw():void {
         var gr:Graphics = this.graphics;
-
         gr.clear();
-
-        //gr.lineStyle(6, 0x0000FF, .5);
-        gr.beginFill(0x0000FF, .5);
-
+        gr.beginFill(color, 1.0);
         gr.drawCircle(center.x, center.y, radius);
-
         gr.endFill();
 
     }
@@ -59,15 +55,15 @@ public class Circle extends Sprite {
         else center.y = y;
     }
 
-    public function capture(circle:Circle) { ////????????
+    public function capture(circle:Circle):int { ////????????
         var intersectionValue:Number = radius + circle.radius - getDistance(circle);
         if (intersectionValue > 0.0) {
             if (radius >= circle.radius)
                 increaseSquare(circle.getTheDifferenceSquares(intersectionValue));
             else
                 circle.increaseSquare(getTheDifferenceSquares(intersectionValue));
-            if (radius <= 1.0) return 1;
-            if (circle.radius <= 1.0) return 2;
+            if (radius <= 0.0) return 1;
+            if (circle.radius <= 0.0) return 2;
         }
         return 0;
     }
@@ -94,6 +90,27 @@ public class Circle extends Sprite {
 
     public function getDistance(circle:Circle) {
         return Point.distance(center, circle.center);
+    }
+
+    // Установить цвет, который зависит от размера объекта
+    public function setColor(minRadius:Number, maxRadius:Number, minColor:uint, maxColor:uint):void {
+        var valueOfNormalized:Number=(radius-minRadius)/(maxRadius-minRadius);
+        var colorTransform:ColorTransform=new ColorTransform();
+        var maxColorTransform:ColorTransform=new ColorTransform();
+        maxColorTransform.color=maxColor;
+        var minColorTransform:ColorTransform=new ColorTransform();
+        minColorTransform.color=minColor;
+        colorTransform.blueOffset=valueOfNormalized*(maxColorTransform.blueOffset-minColorTransform.blueOffset)+
+                minColorTransform.blueOffset;
+        colorTransform.greenOffset=valueOfNormalized*(maxColorTransform.greenOffset-minColorTransform.greenOffset)+
+                minColorTransform.greenOffset;
+        colorTransform.redOffset=valueOfNormalized*(maxColorTransform.redOffset-minColorTransform.redOffset)+
+                minColorTransform.redOffset;
+        color=colorTransform.color;
+    }
+
+    public function set newColor(value:uint):void {
+        color=value;
     }
 
     public function get getRadius():Number {
