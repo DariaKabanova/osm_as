@@ -1,11 +1,10 @@
-
-
 package {
-
 
 import flash.display.Sprite;
 import flash.text.TextField;
+
 [SWF(width="512", height="512", frameRate="24", backgroundColor="#dddddd")]
+
 public class Osm_as extends Sprite {
     public function Osm_as() {
 
@@ -16,9 +15,10 @@ public class Osm_as extends Sprite {
 
         //trace(this.getBounds.height);
 
-        var field:Field=new Field();
+        var field:Field = new Field();
         addChild(field);
-        field.draw();
+        field.startNewGame();
+
     }
 }
 }
