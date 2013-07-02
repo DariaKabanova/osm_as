@@ -59,7 +59,7 @@ public class Circle extends Sprite {
         else center.y = y;
     }
 
-    public function capture(circle:Circle) {
+    public function capture(circle:Circle) { ////????????
         var intersectionValue:Number = radius + circle.radius - getDistance(circle);
         if (intersectionValue > 0.0) {
             if (radius >= circle.radius)
@@ -77,6 +77,14 @@ public class Circle extends Sprite {
         radius = Math.sqrt((square + deltaSquare) / Math.PI);
     }
 
+    // Изменить направление скорости, если радиус circle больше, чем у this
+    public function changeDirection(circle:Circle):void {
+        if (circle.getRadius>radius) { // Убегает, если больше
+            if ((x-circle.centerOfCircle.x<0 && speed.x>0) || (x-circle.centerOfCircle.x>0 && speed.x<0)) speed.x*=-1;
+            if ((y-circle.centerOfCircle.y<0 && speed.y>0) || (y-circle.centerOfCircle.y>0 && speed.y<0)) speed.y*=-1;
+        }
+    }
+
     // Получить разницу площадей при уменьшении диаметра
     public function getTheDifferenceSquares(deltaRadius:Number):Number {
         var lastSquare:Number = square;
@@ -88,6 +96,10 @@ public class Circle extends Sprite {
         return Point.distance(center, circle.center);
     }
 
+    public function get getRadius():Number {
+        return radius;
+    }
+
     public function get square():Number {
         return radius * radius * Math.PI;
     }
@@ -95,6 +107,7 @@ public class Circle extends Sprite {
     public function get centerOfCircle():Point {
         return center;
     }
+
 
 
 }

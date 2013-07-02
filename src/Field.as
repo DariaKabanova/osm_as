@@ -6,6 +6,7 @@ import flash.events.Event;
 import flash.events.TimerEvent;
 import flash.geom.Point;
 import flash.geom.Rectangle;
+import flash.text.TextField;
 import flash.utils.Timer;
 
 
@@ -16,8 +17,9 @@ public class Field extends Sprite {
     var userColor:uint = 0x00ff00;
     var minColor:uint = 0xff0000;
     var maxColor:uint = 0x0000ff;
-    var countOfRivals:int = 10;
+    var countOfRivals:int = 100;
     var midColor:uint;
+    var result:int;
 
     public function Field() {
 
@@ -25,9 +27,18 @@ public class Field extends Sprite {
         timer.addEventListener(TimerEvent.TIMER, onTimer);
         timer.start();
 
+        var gr:Graphics = this.graphics;
+        gr.clear();
+        gr.beginFill(0x000000, .1);
+        gr.drawRect(0, 0, windowWidth, windowHeight);
+        gr.endFill();
+
     }
 
     public function startNewGame():void {
+        for (var i:int=numChildren-1; i>=0; i--)
+            removeChildAt(i);
+        result=0;
         var radius:Number = Math.sqrt(windowWidth * windowHeight / countOfRivals / 20); //5% пространства занято объектами
         addChild(new CircleUser(windowWidth / 2.0, windowHeight / 2.0, radius));
 
@@ -62,25 +73,52 @@ public class Field extends Sprite {
         //stage.addEventListener(Event.ENTER_FRAME,onFrameLoop);
     }
 
-    public function draw() {
+    public function draw():void {
         for (var i:int = 0; i < numChildren; i++) {
             Circle(getChildAt(i)).draw();
         }
     }
 
-    public function move() {
-        for (var i:int = 1; i < numChildren; i++) {
+    public function move():int {
+        for (var i:int = 0; i < numChildren; i++) {
             Circle(getChildAt(i)).motion();
+            for (var j:int=i+1; j<numChildren; j++) {
+                // изменить направление скорости
+                Circle(getChildAt(j)).changeDirection(Circle(getChildAt(i)));
+                var flag:int= Circle(getChildAt(i)).capture(Circle(getChildAt(j)));
+                if (flag==2) {// был поглощен j-ый
+                    removeChildAt(j);
+                    j--;
+                }
+                if (flag==1) {// был поглощен i-ый
+                    removeChildAt(i);
+                    if (i==0) return 2;// Проигрыш
+                    break;
+                }
+            }
+
         }
-    }
-
-    function onFrameLoop(evt:Event):void {
-
+        return 0;
     }
 
     function onTimer(evt:TimerEvent):void {
-        move();
-        draw();
+        if (result==0) {
+            result=move();
+            if (result==1) {
+                var textField:TextField=new TextField();
+                textField.text="Победа";
+                addChild(textField);
+            }
+            if (result==2) {
+                var textField:TextField=new TextField();
+                textField.text="Проигрыш";
+                addChild(textField);
+            }
+            if (result==0)
+            draw();
+        }
     }
+
+
 }
 }
