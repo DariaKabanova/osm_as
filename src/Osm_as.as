@@ -24,21 +24,27 @@ public class Osm_as extends Sprite {
     protected var field:Field;
     protected var fileRef:FileReference;
     public function Osm_as() {
-        parserJSON("config.json");
-
-
-
-    }
-
-    function parserJSON(fileName:String) {
+        // Показать окно выбора пути файла конфигурации
         fileRef = new FileReference();
         fileRef.addEventListener(Event.SELECT, onFileSelected);
         fileRef.browse();
+    }
 
+    public function onFileSelected(evt:Event):void {
+        // Загрузка файла
+        fileRef.addEventListener(Event.COMPLETE, onComplete);
+        fileRef.load();
+    }
 
+    function onComplete(evt:Event):void {
+        // Парсинг файла
+        var file:Object=JSON.parse(fileRef.data.toString());
 
-        var obj:Object=JSON.parse("{\"user\":{\"color\":1}}");
-        trace(obj.user.color);
+        // Инициализация игрового поля
+        field = new Field(512,512,file.user.color,file.enemy.color1,file.enemy.color2,file.enemy.count);
+        stage.addEventListener(KeyboardEvent.KEY_UP, startNewGame);
+        addChild(field);
+        field.startNewGame();
     }
 
     function startNewGame(evt:KeyboardEvent):void {
@@ -47,24 +53,7 @@ public class Osm_as extends Sprite {
             case Keyboard.ESCAPE: NativeApplication.nativeApplication.exit(0); break;
             default: break;
         }
-
-
     }
 
-
-
-    function onComplete(evt:Event):void {
-        var obj:Object=JSON.parse(fileRef.data.toString());
-        //trace(fileRef.data.readUTF());
-        field = new Field();
-        stage.addEventListener(KeyboardEvent.KEY_UP, startNewGame);
-        addChild(field);
-        field.startNewGame();
-    }
-    public function onFileSelected(evt:Event):void {
-        fileRef.addEventListener(Event.COMPLETE, onComplete);
-        fileRef.load();
-
-    }
 }
 }

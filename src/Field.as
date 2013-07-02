@@ -5,6 +5,7 @@ import flash.display.Sprite;
 import flash.events.Event;
 import flash.events.MouseEvent;
 import flash.events.TimerEvent;
+import flash.geom.ColorTransform;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.text.TextField;
@@ -13,19 +14,25 @@ import flash.utils.Timer;
 
 public class Field extends Sprite {
     protected var circles:Array;
-    const windowWidth:int = 512;
-    const windowHeight:int = 512;
-    var userColor:uint = 0x00ff00;
-    var minColor:uint = 0xff0000;
-    var maxColor:uint = 0x0000ff;
-    var countOfRivals:int = 100;
-    var midColor:uint=0x880088;
+    var windowWidth:int;
+    var windowHeight:int;
+    var userColor:uint;
+    var minColor:uint;
+    var maxColor:uint;
+    var countOfEnemies:int;
+    var midColor:uint;
     var halfOfTotalSquare:Number;
     var result:int;
 
-    public function Field() {
+    public function Field(windowWidth:int, windowHeight:int, userColor:Array, minColor:Array, maxColor:Array, countOfEnemies) {
+        this.windowWidth=windowWidth;
+        this.windowHeight=windowHeight;
+        this.userColor=calculatingColor(userColor);
+        this.minColor=calculatingColor(minColor);
+        this.maxColor=calculatingColor(maxColor);
+        this.countOfEnemies=countOfEnemies;
 
-        var timer:Timer = new Timer(42);
+        var timer:Timer = new Timer(42);// FPS
         timer.addEventListener(TimerEvent.TIMER, onTimer);
         timer.start();
 
@@ -35,6 +42,17 @@ public class Field extends Sprite {
         gr.drawRect(0, 0, windowWidth, windowHeight);
         gr.endFill();
 
+        // Нахождение среднего цвета
+        var midColorTransform:ColorTransform=new ColorTransform();
+        var maxColorTransform:ColorTransform=new ColorTransform();
+        maxColorTransform.color=this.maxColor;
+        var minColorTransform:ColorTransform=new ColorTransform();
+        minColorTransform.color=this.minColor;
+        midColorTransform.blueOffset=0.5*(maxColorTransform.blueOffset+minColorTransform.blueOffset);
+        midColorTransform.greenOffset=0.5*(maxColorTransform.greenOffset+minColorTransform.greenOffset);
+        midColorTransform.redOffset=0.5*(maxColorTransform.redOffset+minColorTransform.redOffset);
+        midColor=midColorTransform.color;
+
         addEventListener(MouseEvent.MOUSE_DOWN, mouseDownClick);
 
     }
@@ -43,12 +61,12 @@ public class Field extends Sprite {
         for (var i:int=numChildren-1; i>=0; i--)
             removeChildAt(i);
         result=0;
-        var radius:Number = Math.sqrt(windowWidth * windowHeight / countOfRivals / 20); //5% пространства занято объектами
+        var radius:Number = Math.sqrt(windowWidth * windowHeight / countOfEnemies / 20); //5% пространства занято объектами
         addChild(new CircleUser(windowWidth / 2.0, windowHeight / 2.0, radius));
         Circle(getChildAt(0)).newColor=userColor;
-        halfOfTotalSquare=countOfRivals*Circle(getChildAt(0)).square/2;
+        halfOfTotalSquare=countOfEnemies*Circle(getChildAt(0)).square/2;
 
-        for (var i:int = 0; i < countOfRivals; i++) {
+        for (var i:int = 0; i < countOfEnemies; i++) {
 
             var t:Boolean = true;
             var x:Number, y:Number;
@@ -163,6 +181,14 @@ public class Field extends Sprite {
     function mouseDownClick(evt:MouseEvent):void {
         Circle(getChildAt(0)).changeSpeed(evt.stageX,evt.stageY);
         trace("1");
+    }
+
+    function calculatingColor(colorArray:Array):uint {
+        var colorTransform:ColorTransform=new ColorTransform();
+        colorTransform.redOffset=colorArray[0]*255;
+        colorTransform.greenOffset=colorArray[1]*255;
+        colorTransform.blueOffset=colorArray[2]*255;
+        return colorTransform.color;
     }
 
 

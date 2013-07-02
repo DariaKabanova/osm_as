@@ -3,7 +3,7 @@ package {
 public class CircleUser extends Circle {
 
     protected var deceleration:Number = 0.0;
-    protected const massIndex:Number = 50.0;
+    protected const massIndex:Number = 0.5;
 
     public function CircleUser(x:Number, y:Number, radius:int) {
         super(x, y, radius);
