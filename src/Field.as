@@ -3,6 +3,7 @@ import flash.display.Graphics;
 import flash.display.Shape;
 import flash.display.Sprite;
 import flash.events.Event;
+import flash.events.MouseEvent;
 import flash.events.TimerEvent;
 import flash.geom.Point;
 import flash.geom.Rectangle;
@@ -18,7 +19,8 @@ public class Field extends Sprite {
     var minColor:uint = 0xff0000;
     var maxColor:uint = 0x0000ff;
     var countOfRivals:int = 100;
-    var midColor:uint;
+    var midColor:uint=0x880088;
+    var halfOfTotalSquare:Number;
     var result:int;
 
     public function Field() {
@@ -33,6 +35,8 @@ public class Field extends Sprite {
         gr.drawRect(0, 0, windowWidth, windowHeight);
         gr.endFill();
 
+        addEventListener(MouseEvent.MOUSE_DOWN, mouseDownClick);
+
     }
 
     public function startNewGame():void {
@@ -41,6 +45,8 @@ public class Field extends Sprite {
         result=0;
         var radius:Number = Math.sqrt(windowWidth * windowHeight / countOfRivals / 20); //5% пространства занято объектами
         addChild(new CircleUser(windowWidth / 2.0, windowHeight / 2.0, radius));
+        Circle(getChildAt(0)).newColor=userColor;
+        halfOfTotalSquare=countOfRivals*Circle(getChildAt(0)).square/2;
 
         for (var i:int = 0; i < countOfRivals; i++) {
 
@@ -66,8 +72,8 @@ public class Field extends Sprite {
             // Установить скорость
             var multX:int = -1;
             var multY:int = -1;
-            if (Math.random() > 0.5) multX = 1;
-            if (Math.random() > 0.5) multY = 1;
+            if (Math.random() >= 0.5) multX = 1;
+            if (Math.random() >= 0.5) multY = 1;
             Circle(getChildAt(numChildren - 1)).changeSpeed(10.0 * multX, 10.0 * multY);
         }
         //stage.addEventListener(Event.ENTER_FRAME,onFrameLoop);
@@ -98,6 +104,41 @@ public class Field extends Sprite {
             }
 
         }
+
+        // Проверка на победу
+        if (Circle(getChildAt(0)).square>halfOfTotalSquare) return 1;// Победа
+
+        // Проверка на проражение
+        var check:Boolean=true;
+        for (var i:int=1; i<numChildren; i++) {
+            if (Circle(getChildAt(i)).square>halfOfTotalSquare) return 2;// Поражение (есть объект, у которого площадь больше половины всей площади// )
+            if (Circle(getChildAt(i)).square<=Circle(getChildAt(0)).square) {
+                check=false;
+                break;
+            }
+        }
+        if (check) return 2;// Поражение (у объекта игрока наименьшая площадь)
+
+        // Замена цвета в зависимости от радиуса
+        var minRadius:Number=Circle(getChildAt(0)).getRadius, maxRadius:Number=minRadius;
+        for (var i:int = 1; i <numChildren; i++) {
+            //найти максимальный и минимальный радиусы
+            if (Circle(getChildAt(i)).getRadius < minRadius) minRadius=Circle(getChildAt(i)).getRadius;
+            if (Circle(getChildAt(i)).getRadius > maxRadius) maxRadius=Circle(getChildAt(i)).getRadius;
+        }
+
+        // Радиус пользовательского объекта
+        var userRadius:Number=Circle(getChildAt(0)).getRadius;
+        for (var i:int=1; i<numChildren; i++) {
+            if (Circle(getChildAt(i)).getRadius==userRadius)
+                Circle(getChildAt(i)).newColor=midColor;
+            else {
+                if (Circle(getChildAt(i)).getRadius<=userRadius)
+                    Circle(getChildAt(i)).setColor(minRadius, userRadius, minColor, midColor);
+                else Circle(getChildAt(i)).setColor(userRadius, maxRadius, midColor, maxColor);
+            }
+        }
+
         return 0;
     }
 
@@ -118,6 +159,14 @@ public class Field extends Sprite {
             draw();
         }
     }
+
+    function mouseDownClick(evt:MouseEvent):void {
+        Circle(getChildAt(0)).changeSpeed(evt.stageX,evt.stageY);
+        trace("1");
+    }
+
+
+
 
 
 }
