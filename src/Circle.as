@@ -35,30 +35,69 @@ public class Circle extends Sprite {
     }
 
     public function hitTheWall(x:Number, y:Number) {
+        var newCenter:Point=new Point();
         if (x - radius < 0.0) {
-            center.x = -x + 2 * radius;
+            newCenter.x = -x + 2 * radius;
             speed.x *= -1;
         }
         else if (x + radius > windowWidth) {
-            center.x = 2 * windowWidth - x - 2 * radius;
+            newCenter.x = 2 * windowWidth - x - 2 * radius;
             speed.x *= -1;
         }
-        else center.x = x;
+        else newCenter.x = x;
         if (y - radius < 0.0) {
-            center.y = -y + 2 * radius;
+            newCenter.y = -y + 2 * radius;
             speed.y *= -1;
         }
         else if (y + radius > windowHeight) {
-            center.y = 2 * windowHeight - y - 2 * radius;
+            newCenter.y = 2 * windowHeight - y - 2 * radius;
             speed.y *= -1;
         }
-        else center.y = y;
+        else newCenter.y = y;
+
+        /*
+        // Смещение центра
+        var dx:Number, dy:Number;
+        dx=newCenter.x-center.x;
+        dy=newCenter.y-center.y;
+
+
+
+        // Коэффициент определения точки соприкосновения
+        //var k:Point=new Point(speed.x/(speed.x+speed.y),speed.y/(speed.x+speed.y));
+        var angle:Number=Math.atan(dy/dx);
+
+        // Точка соприкосновения
+        var point:Point=new Point(newCenter.x+radius*Math.cos(angle),newCenter.y+radius*Math.sin(angle));
+
+        var gr:Graphics = this.graphics;
+        gr.clear();
+
+
+
+        //trace(parent.hitTestPoint(point.x,point.y,true));
+        if (parent.hitTestPoint(point.x,point.y,true)) {
+            center=newCenter;
+            //trace(parent.);
+            //trace("-");
+            var circles:Array=parent.getObjectsUnderPoint(point);
+            for (var i:int=0; i<circles.length; i++)
+                capture(circles[i]);
+            //trace("-");
+        }
+
+        //parent.areInaccessibleObjectsUnderPoint() */
+
+        center=newCenter;
+
+
     }
 
-    public function capture(circle:Circle):int { ////????????
+    public function capture(circle:Circle):int {
         var intersectionValue:Number = radius + circle.radius - getDistance(circle);
         if (intersectionValue > 0.0) {
             if (radius >= circle.getRadius)
+
                 increaseSquare(circle.getTheDifferenceSquares(intersectionValue));
             else
                 circle.increaseSquare(getTheDifferenceSquares(intersectionValue));
@@ -71,7 +110,6 @@ public class Circle extends Sprite {
     // Увеличить площадь объекта на deltaSquare
     public function increaseSquare(deltaSquare:Number):void {
         if (deltaSquare>0) {
-            trace(deltaSquare);
             radius = Math.sqrt((square + deltaSquare) / Math.PI);
 
         }
@@ -80,8 +118,8 @@ public class Circle extends Sprite {
     // Изменить направление скорости, если радиус circle больше, чем у this
     public function changeDirection(circle:Circle):void {
         if (circle.getRadius>radius) { // Убегает, если больше
-            if ((x-circle.centerOfCircle.x<0 && speed.x>0) || (x-circle.centerOfCircle.x>0 && speed.x<0)) speed.x*=-1;
-            if ((y-circle.centerOfCircle.y<0 && speed.y>0) || (y-circle.centerOfCircle.y>0 && speed.y<0)) speed.y*=-1;
+            if ((center.x-circle.centerOfCircle.x<0 && speed.x>0) || (center.x-circle.centerOfCircle.x>0 && speed.x<0)) speed.x*=-1;
+            if ((center.y-circle.centerOfCircle.y<0 && speed.y>0) || (center.y-circle.centerOfCircle.y>0 && speed.y<0)) speed.y*=-1;
         }
     }
 

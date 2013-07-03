@@ -1,5 +1,7 @@
 package {
+import flash.display.DisplayObject;
 import flash.display.Graphics;
+import flash.display.MovieClip;
 import flash.display.Shape;
 import flash.display.Sprite;
 import flash.events.Event;
@@ -23,6 +25,11 @@ public class Field extends Sprite {
     var midColor:uint;
     var halfOfTotalSquare:Number;
     var result:int;
+    var timer:Timer;
+    var fps:int;
+    var drawingFlag:Boolean;
+
+
 
     public function Field(windowWidth:int, windowHeight:int, userColor:Array, minColor:Array, maxColor:Array, countOfEnemies) {
         this.windowWidth=windowWidth;
@@ -31,10 +38,6 @@ public class Field extends Sprite {
         this.minColor=calculatingColor(minColor);
         this.maxColor=calculatingColor(maxColor);
         this.countOfEnemies=countOfEnemies;
-
-        var timer:Timer = new Timer(42);// FPS
-        timer.addEventListener(TimerEvent.TIMER, onTimer);
-        timer.start();
 
         var gr:Graphics = this.graphics;
         gr.clear();
@@ -53,15 +56,30 @@ public class Field extends Sprite {
         midColorTransform.redOffset=0.5*(maxColorTransform.redOffset+minColorTransform.redOffset);
         midColor=midColorTransform.color;
 
+        startNewGame();
+
         addEventListener(MouseEvent.MOUSE_DOWN, mouseDownClick);
+
+        timer = new Timer(1000);// FPS
+        timer.addEventListener(TimerEvent.TIMER, onTimer);
+        timer.start();
+
+        drawingFlag=false;
+
+        addEventListener(Event.ENTER_FRAME, onEnterFrame);
+
+
 
     }
 
     public function startNewGame():void {
+
+
         for (var i:int=numChildren-1; i>=0; i--)
             removeChildAt(i);
         result=0;
         var radius:Number = Math.sqrt(windowWidth * windowHeight / countOfEnemies / 20); //5% пространства занято объектами
+
         addChild(new CircleUser(windowWidth / 2.0, windowHeight / 2.0, radius));
         Circle(getChildAt(0)).newColor=userColor;
         halfOfTotalSquare=countOfEnemies*Circle(getChildAt(0)).square/2;
@@ -106,10 +124,12 @@ public class Field extends Sprite {
     public function move():int {
         for (var i:int = 0; i < numChildren; i++) {
             Circle(getChildAt(i)).motion();
+
             for (var j:int=i+1; j<numChildren; j++) {
                 // изменить направление скорости
                 Circle(getChildAt(j)).changeDirection(Circle(getChildAt(i)));
-                var flag:int= Circle(getChildAt(i)).capture(Circle(getChildAt(j)));
+
+                var flag:int=Circle(getChildAt(i)).capture(Circle(getChildAt(j)));
                 if (flag==2) {// был поглощен j-ый
                     removeChildAt(j);
                     j--;
@@ -157,25 +177,16 @@ public class Field extends Sprite {
             }
         }
 
+
+
         return 0;
     }
 
     function onTimer(evt:TimerEvent):void {
-        if (result==0) {
-            result=move();
-            if (result==1) {
-                var textField:TextField=new TextField();
-                textField.text="Победа";
-                addChild(textField);
-            }
-            if (result==2) {
-                var textField:TextField=new TextField();
-                textField.text="Проигрыш";
-                addChild(textField);
-            }
-            if (result==0)
-            draw();
-        }
+        trace(fps);
+        if (fps==24) drawingFlag=true;
+        fps=0;
+
     }
 
     function mouseDownClick(evt:MouseEvent):void {
@@ -189,6 +200,32 @@ public class Field extends Sprite {
         colorTransform.greenOffset=colorArray[1]*255;
         colorTransform.blueOffset=colorArray[2]*255;
         return colorTransform.color;
+    }
+
+    private function onEnterFrame(e:Event):void
+    {
+        fps++;
+
+        if (result==0 && fps<=24) {
+
+            result=move();
+            if (result==1) {
+                var textField:TextField=new TextField();
+                textField.text="Победа";
+                textField.textColor=0x000000;
+                addChild(textField);
+            }
+            if (result==2) {
+                var textField:TextField=new TextField();
+                textField.text="Проигрыш";
+                textField.textColor=0x00ff00;
+                //textField.length=100;
+                addChild(textField);
+            }
+            draw();
+
+        }
+
     }
 
 
