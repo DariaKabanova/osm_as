@@ -6,12 +6,14 @@ import flash.geom.Point;
 
 public class Circle extends Sprite {
 
-    const windowWidth:int = 1024;
+    const windowWidth:int = 1536;
     const windowHeight:int = 1024;
     protected var center:Point;
     protected var radius:Number;
     protected var color:uint;
     protected var speed:Point;
+    protected var block_i:int;
+    protected var block_j:int;
 
     public function Circle(x:Number, y:Number, radius:Number) {
         center = new Point(x, y);
@@ -169,6 +171,27 @@ public class Circle extends Sprite {
 
     public function set newRadius(value:Number):void {
         radius=value;
+    }
+
+    public function get block_x():int {
+        return block_i;
+    }
+
+    public function get block_y():int {
+        return block_j;
+    }
+
+    public function set block_x(value:int):void {
+        block_i=value;
+    }
+
+    public function set block_y(value:int):void {
+        block_j=value;
+    }
+
+    public function setBlock(x:int, y:int):void {
+        block_i=x;
+        block_j=y;
     }
 
 

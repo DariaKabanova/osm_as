@@ -3,7 +3,7 @@ package {
 public class CircleUser extends Circle {
 
     protected var deceleration:Number = 0.0;
-    protected const massIndex:Number = 0.5;
+    protected const massIndex:Number = 50.0;
 
     public function CircleUser(x:Number, y:Number, radius:int) {
         super(x, y, radius);
@@ -18,8 +18,8 @@ public class CircleUser extends Circle {
         if (center.x - deltaSpeedX < 0.0) temp_x *= -1;
         if (center.y - deltaSpeedY < 0.0) temp_y *= -1;
 
-        speed.x = temp_x;
-        speed.y = temp_y;
+        speed.x += temp_x;
+        speed.y += temp_y;
     }
 
     override public function motion():void {

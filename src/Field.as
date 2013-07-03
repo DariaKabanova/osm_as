@@ -28,6 +28,9 @@ public class Field extends Sprite {
     var timer:Timer;
     var fps:int;
     var drawingFlag:Boolean;
+    var areas:Array;
+    var countOfAreas:int;
+    var mouseFlag:Boolean;
 
 
 
@@ -58,17 +61,19 @@ public class Field extends Sprite {
 
         startNewGame();
 
+        mouseFlag=false;
         addEventListener(MouseEvent.MOUSE_DOWN, mouseDownClick);
+        addEventListener(MouseEvent.MOUSE_UP, mouseUpClick);
+        addEventListener(MouseEvent.MOUSE_MOVE, mouseMove);
 
         timer = new Timer(1000);// FPS
         timer.addEventListener(TimerEvent.TIMER, onTimer);
         timer.start();
 
-        drawingFlag=false;
-
         addEventListener(Event.ENTER_FRAME, onEnterFrame);
 
-
+        countOfAreas=Math.pow(2,countOfEnemies/200);
+        //splitToAreas();
 
     }
 
@@ -78,11 +83,17 @@ public class Field extends Sprite {
         for (var i:int=numChildren-1; i>=0; i--)
             removeChildAt(i);
         result=0;
-        var radius:Number = Math.sqrt(windowWidth * windowHeight / countOfEnemies / 20); //5% пространства занято объектами
+        var radius:Number = Math.sqrt(windowWidth * windowHeight / countOfEnemies / 25); //4% пространства занято объектами
 
         addChild(new CircleUser(windowWidth / 2.0, windowHeight / 2.0, radius));
         Circle(getChildAt(0)).newColor=userColor;
         halfOfTotalSquare=countOfEnemies*Circle(getChildAt(0)).square/2;
+
+        var countOfEnemiesOnBlock:int=countOfEnemies/countOfAreas/countOfAreas;
+
+        for (var i:int=0; i<countOfEnemiesOnBlock;i++) {
+
+        }
 
         for (var i:int = 0; i < countOfEnemies; i++) {
 
@@ -95,7 +106,7 @@ public class Field extends Sprite {
                 for (var j:int = 0; j < numChildren; j++) {
                     var center:Point = Circle(getChildAt(j)).centerOfCircle;
                     if (Math.sqrt((x - center.x) * (x - center.x)
-                            + (y - center.y) * (y - center.y)) < 2 * radius + radius / 10.0) {
+                            + (y - center.y) * (y - center.y)) < 2 * radius) {// + radius / 100.0) {
                         t = true;
                         break;
                     }
@@ -112,7 +123,6 @@ public class Field extends Sprite {
             if (Math.random() >= 0.5) multY = 1;
             Circle(getChildAt(numChildren - 1)).changeSpeed(10.0 * multX, 10.0 * multY);
         }
-        //stage.addEventListener(Event.ENTER_FRAME,onFrameLoop);
     }
 
     public function draw():void {
@@ -122,10 +132,86 @@ public class Field extends Sprite {
     }
 
     public function move():int {
-        for (var i:int = 0; i < numChildren; i++) {
-            Circle(getChildAt(i)).motion();
 
-            for (var j:int=i+1; j<numChildren; j++) {
+        for (var i:int = 0; i < numChildren; i++) {
+            var circle:Circle=Circle(getChildAt(i));
+            circle.motion();
+            if (i!=0) Circle(getChildAt(i)).changeDirection(Circle(getChildAt(0)));
+        }
+        splitToAreas();
+
+        var deleteI:DisplayObject;//=new DisplayObject();
+
+        for (var i:int = 0; i < numChildren; i++) {
+            //var circle:Circle=Circle(getChildAt(i));
+            if (Circle(getChildAt(i)).block_x>=0 && Circle(getChildAt(i)).block_x<countOfAreas &&
+                    Circle(getChildAt(i)).block_y>=0 && Circle(getChildAt(i)).block_y<countOfAreas) {
+            var blockArray:Array=areas[Circle(getChildAt(i)).block_x][Circle(getChildAt(i)).block_y];
+            //trace(Circle(getChildAt(i)).block_x,Circle(getChildAt(i)).block_y);
+
+            for (var j:int=0; j<blockArray.length; j++) {
+                // Учитывать смещение при удалении
+
+                //trace(blockArray.length,blockArray[blockArray.length-1]);
+                if (blockArray[j]) {
+                    if(this.contains(getChildAt(i)) && blockArray[j]!=getChildAt(i)) {
+                        if (blockArray[j]!=deleteI)  {
+
+                    //var otherCircle:Circle=Circle(getChildAt(blockArray[j]));
+
+                            //Circle(blockArray[j]).changeDirection(Circle(getChildAt(i)));
+
+                    var flag:int=Circle(getChildAt(i)).capture(Circle(blockArray[j]));
+                    if (flag==2) {// был поглощен j-ый
+                        //blockArray[j]=null;
+                        if (this.contains(blockArray[j]))
+                            removeChild(blockArray[j]);
+                        delete(blockArray[j]);
+                        //j--;
+                    }
+                    else if (flag==1) {// был поглощен i-ый
+                        deleteI=getChildAt(i);
+                        removeChildAt(i);
+
+                        if (i==0)
+                            return 2;// Проигрыш
+                        break;
+                    }
+                    }
+                else {
+                        delete(blockArray[j]);
+                        deleteI=null;
+                    }
+                }
+                }
+            }     }
+
+            /*if (circle.block_x<countOfAreas-1) {
+                var blockArray:Array=areas[circle.block_x+1][circle.block_y];
+                for (var j:int=0; j<blockArray.length; j++) {
+                    //trace(blockArray.length,blockArray[blockArray.length-1]);
+                    if (i!=blockArray[j]) {
+                        var otherCircle:Circle=Circle(getChildAt(blockArray[j]));
+                        otherCircle.changeDirection(circle);
+
+                        var flag:int=circle.capture(otherCircle);
+                        if (flag==2) {// был поглощен j-ый
+                            removeChild(otherCircle);
+                            j--;
+                        }
+                        if (flag==1) {// был поглощен i-ый
+                            removeChild(circle);
+                            if (i==0) return 2;// Проигрыш
+                            break;
+                        }
+
+                    }
+                }
+            }*/
+
+
+
+            /*for (var j:int=i+1; j<numChildren; j++) {
                 // изменить направление скорости
                 Circle(getChildAt(j)).changeDirection(Circle(getChildAt(i)));
 
@@ -139,7 +225,7 @@ public class Field extends Sprite {
                     if (i==0) return 2;// Проигрыш
                     break;
                 }
-            }
+            }*/
 
         }
 
@@ -177,21 +263,59 @@ public class Field extends Sprite {
             }
         }
 
-
+        draw();
 
         return 0;
     }
 
+    protected function splitToAreas():void {
+        areas=null;
+        areas=new Array();
+        for (var i:int=0; i<countOfAreas; i++) {
+            var array:Array=new Array();
+            for (var j:int=0; j<countOfAreas; j++) {
+                var listOfCircles:Array=new Array();
+                /*for (var k:int=0; k<numChildren; k++) {
+                    var value:int=0;
+                    listOfCircles.push();*/
+                //var value:int=new int(10);
+                array.push(listOfCircles);
+
+
+            }
+            areas.push(array);
+        }
+        for (var i:int=0; i<numChildren; i++) {
+            var block_i:int=Circle(getChildAt(i)).centerOfCircle.x/(windowWidth/countOfAreas);
+            var block_j:int=Circle(getChildAt(i)).centerOfCircle.y/(windowHeight/countOfAreas);
+            Circle(getChildAt(i)).setBlock(block_i,block_j);
+
+            if (block_i>=0 && block_j>=0 && block_i<countOfAreas && block_j<countOfAreas) {
+                areas[block_i][block_j].push(getChildAt(i));
+            }
+        }
+
+    }
+
     function onTimer(evt:TimerEvent):void {
-        trace(fps);
-        if (fps==24) drawingFlag=true;
+        trace(fps, countOfAreas);
+        //if (fps>25 && countOfAreas>=2) countOfAreas/=2;
+        //if (fps<24) countOfAreas*=2;
+        //if (fps==24) drawingFlag=true;
         fps=0;
 
     }
 
     function mouseDownClick(evt:MouseEvent):void {
+        mouseFlag=true;
         Circle(getChildAt(0)).changeSpeed(evt.stageX,evt.stageY);
-        trace("1");
+    }
+    function mouseMove(evt:MouseEvent):void {
+        if (mouseFlag)
+            Circle(getChildAt(0)).changeSpeed(evt.stageX,evt.stageY);
+    }
+    function mouseUpClick(evt:MouseEvent):void {
+        mouseFlag=false;
     }
 
     function calculatingColor(colorArray:Array):uint {
@@ -209,6 +333,7 @@ public class Field extends Sprite {
         if (result==0 && fps<=24) {
 
             result=move();
+
             if (result==1) {
                 var textField:TextField=new TextField();
                 textField.text="Победа";
@@ -222,7 +347,7 @@ public class Field extends Sprite {
                 //textField.length=100;
                 addChild(textField);
             }
-            draw();
+
 
         }
 

@@ -18,7 +18,7 @@ import flash.net.FileReference;
 
 import org.osmf.layout.LayoutTargetSprite;
 
-[SWF(width="1024", height="1024", frameRate="24", backgroundColor="#dddddd")]
+[SWF(width="512", height="512", frameRate="24", backgroundColor="#dddddd")]
 
 public class Osm_as extends Sprite {
     protected var field:Field;
@@ -41,7 +41,7 @@ public class Osm_as extends Sprite {
         var file:Object=JSON.parse(fileRef.data.toString());
 
         // Инициализация игрового поля
-        field = new Field(1024,1024,file.user.color,file.enemy.color1,file.enemy.color2,file.enemy.count);
+        field = new Field(1536,1024,file.user.color,file.enemy.color1,file.enemy.color2,file.enemy.count);
         stage.addEventListener(KeyboardEvent.KEY_UP, startNewGame);
         addChild(field);
         //field.startNewGame();
