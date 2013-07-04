@@ -18,7 +18,7 @@ import flash.net.FileReference;
 
 import org.osmf.layout.LayoutTargetSprite;
 
-[SWF(width="512", height="512", frameRate="24", backgroundColor="#dddddd")]
+[SWF(width="1536", height="1024", frameRate="24", backgroundColor="#dddddd")]
 
 public class Osm_as extends Sprite {
     protected var field:Field;

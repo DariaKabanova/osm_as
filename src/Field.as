@@ -10,6 +10,9 @@ import flash.events.TimerEvent;
 import flash.geom.ColorTransform;
 import flash.geom.Point;
 import flash.geom.Rectangle;
+import flash.media.Sound;
+import flash.media.SoundChannel;
+import flash.net.URLRequest;
 import flash.text.TextField;
 import flash.utils.Timer;
 
@@ -30,11 +33,24 @@ public class Field extends Sprite {
     var drawingFlag:Boolean;
     var areas:Array;
     var countOfAreas:int;
+    var numChildrenLast:int;
     var mouseFlag:Boolean;
+    var snd:Sound;
+    var sndWin:Sound;
+    var sndLoser:Sound;
 
 
 
     public function Field(windowWidth:int, windowHeight:int, userColor:Array, minColor:Array, maxColor:Array, countOfEnemies) {
+
+        snd = new Sound();
+        snd.load(new URLRequest("song.mp3"));
+        sndWin = new Sound();
+        sndWin.load(new URLRequest("song_win.mp3"));
+        sndLoser = new Sound();
+        sndLoser.load(new URLRequest("song_loser.mp3"));
+
+
         this.windowWidth=windowWidth;
         this.windowHeight=windowHeight;
         this.userColor=calculatingColor(userColor);
@@ -72,14 +88,15 @@ public class Field extends Sprite {
 
         addEventListener(Event.ENTER_FRAME, onEnterFrame);
 
-        countOfAreas=Math.pow(2,countOfEnemies/200);
+        //Math.pow(2,countOfEnemies/200);
+
         //splitToAreas();
 
     }
 
     public function startNewGame():void {
 
-
+        countOfAreas=1;
         for (var i:int=numChildren-1; i>=0; i--)
             removeChildAt(i);
         result=0;
@@ -123,6 +140,7 @@ public class Field extends Sprite {
             if (Math.random() >= 0.5) multY = 1;
             Circle(getChildAt(numChildren - 1)).changeSpeed(10.0 * multX, 10.0 * multY);
         }
+        numChildrenLast=numChildren;
     }
 
     public function draw():void {
@@ -140,92 +158,79 @@ public class Field extends Sprite {
         }
         splitToAreas();
 
-        var deleteI:DisplayObject;//=new DisplayObject();
+        var deleteI:DisplayObject;
+
 
         for (var i:int = 0; i < numChildren; i++) {
-            //var circle:Circle=Circle(getChildAt(i));
+            try {
             if (Circle(getChildAt(i)).block_x>=0 && Circle(getChildAt(i)).block_x<countOfAreas &&
                     Circle(getChildAt(i)).block_y>=0 && Circle(getChildAt(i)).block_y<countOfAreas) {
-            var blockArray:Array=areas[Circle(getChildAt(i)).block_x][Circle(getChildAt(i)).block_y];
-            //trace(Circle(getChildAt(i)).block_x,Circle(getChildAt(i)).block_y);
+                var capturingCurrent:Boolean=false;
+                var blockArray:Array=areas[Circle(getChildAt(i)).block_x][Circle(getChildAt(i)).block_y];
+                if (!capturingCurrent) {
+                    var flag=lookBlock(blockArray,i);
+                    if (flag==2) return 2;
+                    else if (flag==3) capturingCurrent=true;
+                }
 
-            for (var j:int=0; j<blockArray.length; j++) {
-                // Учитывать смещение при удалении
-
-                //trace(blockArray.length,blockArray[blockArray.length-1]);
-                if (blockArray[j]) {
-                    if(this.contains(getChildAt(i)) && blockArray[j]!=getChildAt(i)) {
-                        if (blockArray[j]!=deleteI)  {
-
-                    //var otherCircle:Circle=Circle(getChildAt(blockArray[j]));
-
-                            //Circle(blockArray[j]).changeDirection(Circle(getChildAt(i)));
-
-                    var flag:int=Circle(getChildAt(i)).capture(Circle(blockArray[j]));
-                    if (flag==2) {// был поглощен j-ый
-                        //blockArray[j]=null;
-                        if (this.contains(blockArray[j]))
-                            removeChild(blockArray[j]);
-                        delete(blockArray[j]);
-                        //j--;
-                    }
-                    else if (flag==1) {// был поглощен i-ый
-                        deleteI=getChildAt(i);
-                        removeChildAt(i);
-
-                        if (i==0)
-                            return 2;// Проигрыш
-                        break;
-                    }
-                    }
-                else {
-                        delete(blockArray[j]);
-                        deleteI=null;
+                if (!capturingCurrent) {
+                    // Проверка слева
+                    var left_x:int=Circle(getChildAt(i)).block_x;
+                    // Если часть круга выходит за область
+                    if (left_x>0 && int((Circle(getChildAt(i)).centerOfCircle.x-Circle(getChildAt(i)).getRadius)/
+                            (windowWidth/countOfAreas))<left_x) {
+                        left_x--;
+                        var blockArray:Array=areas[left_x][Circle(getChildAt(i)).block_y];
+                        var flag=lookBlock(blockArray,i);
+                        if (flag==2) return 2;
+                        else if (flag==3) capturingCurrent=true;
                     }
                 }
-                }
-            }     }
 
-            /*if (circle.block_x<countOfAreas-1) {
-                var blockArray:Array=areas[circle.block_x+1][circle.block_y];
-                for (var j:int=0; j<blockArray.length; j++) {
-                    //trace(blockArray.length,blockArray[blockArray.length-1]);
-                    if (i!=blockArray[j]) {
-                        var otherCircle:Circle=Circle(getChildAt(blockArray[j]));
-                        otherCircle.changeDirection(circle);
-
-                        var flag:int=circle.capture(otherCircle);
-                        if (flag==2) {// был поглощен j-ый
-                            removeChild(otherCircle);
-                            j--;
-                        }
-                        if (flag==1) {// был поглощен i-ый
-                            removeChild(circle);
-                            if (i==0) return 2;// Проигрыш
-                            break;
-                        }
-
+                if (!capturingCurrent) {
+                    // Проверка справа
+                    var right_x:int=Circle(getChildAt(i)).block_x;
+                    // Если часть круга выходит за область
+                    if (right_x<countOfAreas-1 && int((Circle(getChildAt(i)).centerOfCircle.x+Circle(getChildAt(i)).getRadius)/
+                            (windowWidth/countOfAreas))<right_x) {
+                        right_x++;
+                        var blockArray:Array=areas[right_x][Circle(getChildAt(i)).block_y];
+                        var flag=lookBlock(blockArray,i);
+                        if (flag==2) return 2;
+                        else if (flag==3) capturingCurrent=true;
                     }
                 }
-            }*/
 
-
-
-            /*for (var j:int=i+1; j<numChildren; j++) {
-                // изменить направление скорости
-                Circle(getChildAt(j)).changeDirection(Circle(getChildAt(i)));
-
-                var flag:int=Circle(getChildAt(i)).capture(Circle(getChildAt(j)));
-                if (flag==2) {// был поглощен j-ый
-                    removeChildAt(j);
-                    j--;
+                if (!capturingCurrent) {
+                    // Проверка сверху
+                    var top_y:int=Circle(getChildAt(i)).block_y;
+                    // Если часть круга выходит за область
+                    if (top_y>0 && int((Circle(getChildAt(i)).centerOfCircle.y-Circle(getChildAt(i)).getRadius)/
+                            (windowWidth/countOfAreas))<top_y) {
+                        top_y--;
+                        var blockArray:Array=areas[Circle(getChildAt(i)).block_x][top_y];
+                        var flag=lookBlock(blockArray,i);
+                        if (flag==2) return 2;
+                        else if (flag==3) capturingCurrent=true;
+                    }
                 }
-                if (flag==1) {// был поглощен i-ый
-                    removeChildAt(i);
-                    if (i==0) return 2;// Проигрыш
-                    break;
+
+                if (!capturingCurrent) {
+                    // Проверка снизу
+                    var bottom_y:int=Circle(getChildAt(i)).block_y;
+                    // Если часть круга выходит за область
+                    if (bottom_y<countOfAreas-1 && int((Circle(getChildAt(i)).centerOfCircle.y+Circle(getChildAt(i)).getRadius)/
+                            (windowWidth/countOfAreas))<bottom_y) {
+                        bottom_y++;
+                        var blockArray:Array=areas[Circle(getChildAt(i)).block_x][bottom_y];
+                        var flag=lookBlock(blockArray,i);
+                        if (flag==2) return 2;
+                        else if (flag==3) capturingCurrent=true;
+                    }
                 }
-            }*/
+            }
+            }
+            catch(error:Error) {trace(error);}
 
         }
 
@@ -268,6 +273,43 @@ public class Field extends Sprite {
         return 0;
     }
 
+    protected function lookBlock(blockArray:Array,i:int):int {
+        var deleteI:DisplayObject;
+        for (var j:int=0; j<blockArray.length; j++) {
+            // Учитывать смещение при удалении
+
+            if (blockArray[j] && this.contains(getChildAt(i))) {
+                if(blockArray[j]!=getChildAt(i)) {
+                    if (blockArray[j]!=deleteI)  {
+                        var flag:int=Circle(getChildAt(i)).capture(Circle(blockArray[j]));
+                        if (flag==2) {// был поглощен j-ый
+                            if (this.contains(blockArray[j]))
+                                removeChild(blockArray[j]);
+                            delete(blockArray[j]);
+                            var channel:SoundChannel = new SoundChannel();
+                            channel = snd.play();
+                        }
+                        else if (flag==1) {// был поглощен i-ый
+                            deleteI=getChildAt(i);
+                            removeChildAt(i);
+                            var channel:SoundChannel = new SoundChannel();
+                            channel = snd.play();
+
+                            if (i==0) return 2;// Проигрыш
+                            return 3;
+                            break;
+                        }
+                    }
+                    else {
+                        delete(blockArray[j]);
+                        deleteI=null;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
     protected function splitToAreas():void {
         areas=null;
         areas=new Array();
@@ -299,8 +341,9 @@ public class Field extends Sprite {
 
     function onTimer(evt:TimerEvent):void {
         trace(fps, countOfAreas);
+
         //if (fps>25 && countOfAreas>=2) countOfAreas/=2;
-        //if (fps<24) countOfAreas*=2;
+        //if (fps<10) countOfAreas*=2;
         //if (fps==24) drawingFlag=true;
         fps=0;
 
@@ -331,16 +374,24 @@ public class Field extends Sprite {
         fps++;
 
         if (result==0 && fps<=24) {
-
+            if (numChildrenLast/numChildren>2 && countOfAreas>=2) {
+                countOfAreas/=2;
+                numChildrenLast=numChildren;
+            }
             result=move();
 
             if (result==1) {
+                var channel:SoundChannel = new SoundChannel();
+                channel = sndWin.play();
                 var textField:TextField=new TextField();
                 textField.text="Победа";
                 textField.textColor=0x000000;
                 addChild(textField);
+
             }
             if (result==2) {
+                var channel:SoundChannel = new SoundChannel();
+                channel = sndLoser.play();
                 var textField:TextField=new TextField();
                 textField.text="Проигрыш";
                 textField.textColor=0x00ff00;
